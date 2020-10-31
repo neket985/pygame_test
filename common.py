@@ -1,7 +1,7 @@
 import pygame
 
 
-def aabs(mob: pygame.sprite.Sprite, player: pygame.sprite.Sprite) -> bool:
+def aabb(mob: pygame.sprite.Sprite, player: pygame.sprite.Sprite) -> bool:
     return mob.rect.right > player.rect.left and \
            mob.rect.left < player.rect.right and \
            mob.rect.bottom > player.rect.top and \
