@@ -1,7 +1,5 @@
 import pygame
 import env
-import common
-import player
 import window
 
 window = window.Window()
