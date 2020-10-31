@@ -1,5 +1,6 @@
 import pygame
 import env
+import common
 import player
 import apple
 
@@ -15,7 +16,8 @@ all_sprites = pygame.sprite.Group()
 player = player.Player()
 all_sprites.add(player)
 
-all_sprites.add(apple.Apple(), apple.Apple(), apple.Apple(), apple.Apple(), apple.Apple(), apple.Apple())
+for i in range(10):
+    all_sprites.add(apple.Apple())
 
 # Цикл игры
 running = True
@@ -26,15 +28,17 @@ while running:
         if event.type == pygame.QUIT:
             running = False
             break
+        elif event.type == pygame.KEYDOWN:
+            player.move_start(event.key)
+        elif event.type == pygame.KEYUP:
+            player.move_end(event.key)
+
     # Если при прочтени списка событий, в нем не было события закрытия окна
     else:
         # Обновление
         for i in all_sprites:
-            if(isinstance(i, apple.Apple)):
-                if (i.rect.right > player.rect.left and \
-                        i.rect.left < player.rect.right and \
-                        i.rect.bottom > player.rect.top and \
-                        i.rect.top < player.rect.bottom):
+            if isinstance(i, apple.Apple):
+                if common.aabs(i, player):
                     all_sprites.remove(i)
 
         all_sprites.update()
