@@ -35,12 +35,13 @@ class Window:
 
         self.all_sprites.update()
 
-        collided = pygame.sprite.spritecollide(self.player, self.flower_sprites, False)
+        collided = pygame.sprite.spritecollide(self.player, self.flower_sprites, False,
+                                               pygame.sprite.collide_rect_ratio(0.7))
         for i in collided:
             self.flower_sprites.remove(i)
             self.top_menu.flowers_count = self.flower_sprites.__len__()
 
-        if self.player.rect.colliderect(self.girl) != 0:
+        if pygame.sprite.spritecollide(self.player, self.girl_sprites, False):
             if self.flower_sprites.__len__() == 0:
                 self.top_menu.finish()
                 print("Победа")
@@ -60,20 +61,22 @@ class Window:
             self.finish = True
 
     def draw(self):
-        self.screen.fill(env.BLACK)
-        self.all_sprites.draw(self.screen)
+        self.screen.fill(env.GREEN)
+        self.girl_sprites.draw(self.screen)
         self.flower_sprites.draw(self.screen)
+        self.all_sprites.draw(self.screen)
 
     def restart(self):
         self.finish = False
         self.all_sprites = pygame.sprite.Group()
-        self.player = player.Player()
+        self.player = player.Player(self.clock)
+        self.girl_sprites = pygame.sprite.Group()
         self.girl = girl.Girl()
-        self.top_menu = TopMenu()
-        self.all_sprites.add(self.player, self.girl, self.top_menu)
+        self.girl_sprites.add(self.girl)
 
         self.flower_sprites = pygame.sprite.Group()
         for i in range(self.flowers_count):
             self.flower_sprites.add(flower.Flower())
 
-        self.top_menu.flowers_count = self.flower_sprites.__len__()
+        self.top_menu = TopMenu(self.flower_sprites.__len__())
+        self.all_sprites.add(self.player, self.top_menu)

@@ -9,14 +9,14 @@ import env
 
 class TopMenu(Sprite):
     timer = 30
-    flowers_count = 0
     width = 500
     height = 60
 
-    def __init__(self):
+    def __init__(self, flowers_count: int):
         self.start_at = int(datetime.datetime.utcnow().timestamp())
         self.finish_at = None
         self.finished = False
+        self.flowers_count = flowers_count
         Sprite.__init__(self)
         self.render()
 
