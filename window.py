@@ -26,14 +26,17 @@ class Window:
                 self.restart()
             else:
                 self.player.move_start(event.key)
+                self.girl.move_start(event.key)
         elif event.type == pygame.KEYUP:
             self.player.move_end(event.key)
+            self.girl.move_end(event.key)
 
     def update(self):
         if self.finish:
             return
 
         self.all_sprites.update()
+        self.girl_sprites.update()
 
         collided = pygame.sprite.spritecollide(self.player, self.flower_sprites, False,
                                                pygame.sprite.collide_rect_ratio(0.7))
@@ -69,7 +72,7 @@ class Window:
     def restart(self):
         self.finish = False
         self.all_sprites = pygame.sprite.Group()
-        self.player = player.Player(self.clock)
+        self.player = player.Player()
         self.girl_sprites = pygame.sprite.Group()
         self.girl = girl.Girl()
         self.girl_sprites.add(self.girl)

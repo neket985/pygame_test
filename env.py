@@ -1,3 +1,5 @@
+import os
+
 import pygame
 
 
@@ -12,11 +14,18 @@ RED = (255, 0, 0)
 GREEN = (80, 155, 80)
 BLUE = (0, 0, 255)
 
-KEY_LEFT = [97, 1092, 1073741904] #pygame.K_a
-KEY_RIGHT = [100, 1074, 1073741903] #pygame.K_d
-KEY_UP = [119, 1094, 1073741906] #pygame.K_w
-KEY_DOWN = [115, 1099, 1073741905] #pygame.K_s
+PLAYER_KEY_LEFT = (97, 1092) #pygame.K_a
+PLAYER_KEY_RIGHT = (100, 1074) #pygame.K_d
+PLAYER_KEY_UP = (119, 1094) #pygame.K_w
+PLAYER_KEY_DOWN = (115, 1099) #pygame.K_s
 
+GIRL_KEY_LEFT = (1073741904,)
+GIRL_KEY_RIGHT = (1073741903,)
+GIRL_KEY_UP = (1073741906,)
+GIRL_KEY_DOWN = (1073741905,)
+
+game_folder = os.path.dirname(__file__)
+img_folder = os.path.join(game_folder, 'assets', 'img')
 
 
 

@@ -1,13 +1,11 @@
 import os
-
 import pygame
 import env
-from spritesheet import SpriteSheet
+from moved_entity import MovedEntity
 
 
-class Girl(pygame.sprite.Sprite):
-    game_folder = os.path.dirname(__file__)
-    img_folder = os.path.join(game_folder, 'assets', 'img')
+class Girl(MovedEntity):
+    speed = 4
 
     @staticmethod
     def transform_sprite(s: pygame.Surface) -> pygame.Surface:
@@ -16,7 +14,8 @@ class Girl(pygame.sprite.Sprite):
         return surf.convert_alpha()
 
     def __init__(self):
-        pygame.sprite.Sprite.__init__(self)
-        img = SpriteSheet(os.path.join(self.img_folder, 'characters.png'))
-        self.image = self.transform_sprite(img.image_at((7*16, 0, 16, 16)))
+        self.load_images(os.path.join(env.img_folder, 'characters.png'), (6*16, 0, 3*16, 4*16), (16, 16))
+        MovedEntity.__init__(self, env.GIRL_KEY_LEFT, env.GIRL_KEY_RIGHT, env.GIRL_KEY_UP, env.GIRL_KEY_DOWN)
+
+        self.image = self.getSpriteByTik()
         self.rect = self.image.get_rect(top=0, right=env.WIDTH-10)
