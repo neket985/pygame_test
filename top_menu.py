@@ -13,7 +13,7 @@ class TopMenu(Sprite):
     height = 60
 
     def __init__(self, flowers_count: int):
-        self.start_at = int(datetime.datetime.utcnow().timestamp())
+        self.start_at = pygame.time.get_ticks()
         self.finish_at = None
         self.finished = False
         self.flowers_count = flowers_count
@@ -39,10 +39,10 @@ class TopMenu(Sprite):
 
     def getExpireTime(self) -> int:
         if self.finished:
-            expire_after = self.timer - (self.finish_at - self.start_at)
+            expire_after = self.timer - (self.finish_at - self.start_at)//1000
         else:
-            now = int(datetime.datetime.utcnow().timestamp())
-            expire_after = self.timer - (now - self.start_at)
+            now = pygame.time.get_ticks()
+            expire_after = self.timer - (now - self.start_at)//1000
 
         if expire_after < 0:
             expire_after = 0
@@ -50,5 +50,5 @@ class TopMenu(Sprite):
         return expire_after
 
     def finish(self):
-        self.finish_at = int(datetime.datetime.utcnow().timestamp())
+        self.finish_at = pygame.time.get_ticks()
         self.finished = True

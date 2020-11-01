@@ -1,15 +1,21 @@
+from typing import Dict
+
 import pygame
+from pygame.sprite import Group
 
 import common
 import env
 import flower
 import girl
 import player
+from bot import Bot
+from moved_entity import MovedEntity
 from top_menu import TopMenu
 
 
 class Window:
     flowers_count = 10
+    bots_count = 200
 
     def __init__(self):
         # создаем игру и окно
@@ -18,11 +24,13 @@ class Window:
         self.screen = pygame.display.set_mode((env.WIDTH, env.HEIGHT))
         pygame.display.set_caption("My Game")
         self.clock = pygame.time.Clock()
+        self.finish = False
         self.restart()
 
     def onEvent(self, event):
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
+                self.finish = True
                 self.restart()
             else:
                 self.player.move_start(event.key)
@@ -33,19 +41,34 @@ class Window:
 
     def update(self):
         if self.finish:
+            self.restart()
             return
+
+        # ход ботов
+        for b in self.bots:
+            b.auto_step()
 
         self.all_sprites.update()
         self.girl_sprites.update()
 
-        collided = pygame.sprite.spritecollide(self.player, self.flower_sprites, False,
-                                               pygame.sprite.collide_rect_ratio(0.7))
-        for i in collided:
-            self.flower_sprites.remove(i)
-            self.top_menu.flowers_count = self.flower_sprites.__len__()
+        for plyr in self.flower_sprites:
+            collided = pygame.sprite.spritecollide(plyr, self.flower_sprites[plyr], False,
+                                                   pygame.sprite.collide_rect_ratio(0.7))
+            for i in collided:
+                self.flower_sprites[plyr].remove(i)
+                self.top_menu.flowers_count = self.flower_sprites.__len__()
 
-        if pygame.sprite.spritecollide(self.player, self.girl_sprites, False):
-            if self.flower_sprites.__len__() == 0:
+        self.check_win(self.player)
+        for b in self.bots:
+            self.check_win(b)
+
+        if self.top_menu.getExpireTime() == 0:
+            print("Поражение")
+            self.finish = True
+
+    def check_win(self, plyr):
+        if pygame.sprite.spritecollide(plyr, self.girl_sprites, False):
+            if self.flower_sprites[plyr].__len__() == 0:
                 self.top_menu.finish()
                 print("Победа")
                 self.finish = True
@@ -59,27 +82,43 @@ class Window:
             elif girl_collided[3]:
                 self.player.rect.left = self.girl.rect.right
 
-        if self.top_menu.getExpireTime() == 0:
-            print("Поражение")
-            self.finish = True
-
     def draw(self):
         self.screen.fill(env.GREEN)
         self.girl_sprites.draw(self.screen)
-        self.flower_sprites.draw(self.screen)
+        [self.flower_sprites[i].draw(self.screen) for i in self.flower_sprites]
         self.all_sprites.draw(self.screen)
 
     def restart(self):
-        self.finish = False
         self.all_sprites = pygame.sprite.Group()
         self.player = player.Player()
         self.girl_sprites = pygame.sprite.Group()
         self.girl = girl.Girl()
         self.girl_sprites.add(self.girl)
 
-        self.flower_sprites = pygame.sprite.Group()
-        for i in range(self.flowers_count):
-            self.flower_sprites.add(flower.Flower())
+        if self.finish:
+            self.refresh_bots()
+        else:
+            self.bots = [Bot(pygame.sprite.Group(), self.girl) for i in range(self.bots_count)]
 
-        self.top_menu = TopMenu(self.flower_sprites.__len__())
-        self.all_sprites.add(self.player, self.top_menu)
+        self.flower_sprites: Dict[MovedEntity, Group] = \
+            dict([(self.player, pygame.sprite.Group())] + [(b, b.flowers) for b in self.bots])
+
+        for plyr in self.flower_sprites:
+            for i in range(self.flowers_count):
+                self.flower_sprites[plyr].add(flower.Flower())
+
+        self.top_menu = TopMenu(self.flower_sprites[self.player].__len__())
+        self.all_sprites.add(*self.bots, self.player, self.top_menu)
+        self.finish = False
+
+    def refresh_bots(self):
+        bots_scores = [bot.get_score() for bot in self.bots]
+        best_bot = self.bots[bots_scores.index(max(bots_scores))]
+        print('Лучший!')
+        print('Цветов осталось не собрано ' + str(best_bot.flowers.__len__()))
+        print('Стоял у стены ' + str(best_bot.stay_frames) + ' кадров')
+        print(best_bot.kefs)
+
+        new_bots_scores = best_bot.get_child_kefs(self.bots_count - 1)
+        new_bots_scores.append(best_bot.kefs)
+        self.bots = [Bot(pygame.sprite.Group(), self.girl, kefs) for kefs in new_bots_scores]

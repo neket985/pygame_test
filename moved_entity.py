@@ -13,7 +13,7 @@ class MovedEntity(Sprite):
     speed = 6
     move_state = (0, 0)
     img_row_k = 0
-    images = []
+    images: List[pygame.Surface] = []
 
     tik_moves_buffer = set([])
     perm_move_state = (0, 0)
