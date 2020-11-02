@@ -120,11 +120,13 @@ class Window:
     def refresh_bots(self):
         self.gen += 1
         sorted_scores = self.bots.copy()
-        sorted_scores.sort(key=lambda x: x.get_score(), reverse=True)
+        sorted_scores.sort(key=lambda x: x.flowers.__len__())
         best_bot = sorted_scores[0]
+        sorted_scores.sort(key=lambda x: x.get_score(), reverse=True)
         print('Лучший!')
         print('Цветов осталось не собрано ' + str(best_bot.flowers.__len__()))
         print('Очки ' + str(best_bot.score))
+        print('Gen ' + str(best_bot.gen) + '(' + str(self.gen-1) + ')')
         print(best_bot.kefs)
 
         best_bots = sorted_scores[0:self.parents_count]

@@ -67,7 +67,7 @@ class Bot(MovedEntity):
             self.last_pos = new_pos
             self.oreol_contains = 0
         elif self.oreol_move_timer - self.oreol_contains <= 0:
-            self.score -= 10*(self.oreol_contains-self.oreol_move_timer)
+            self.score -= (self.oreol_contains-self.oreol_move_timer)//10
 
         if self.rect.top == 0 or self.rect.right == env.WIDTH or self.rect.bottom == env.HEIGHT or self.rect.left == 0:
             self.score -= 5
@@ -105,7 +105,7 @@ class Bot(MovedEntity):
 
     def get_score(self):
         move_rect = (self.max_coord[0] - self.min_coord[0]) + (self.max_coord[1] - self.min_coord[1])
-        return 100 * (-self.flowers.__len__()) + self.score + move_rect
+        return 1000 * (-self.flowers.__len__()) + self.score + move_rect
 
     def get_child_kefs(self, count) -> List:
         return [self.get_child_kef() for i in range(count)]
@@ -113,5 +113,5 @@ class Bot(MovedEntity):
     def get_child_kef(self):
         rnd_kef_num = random.randint(0, 100) % self.kefs.__len__()
         copy = self.kefs.copy()
-        copy[rnd_kef_num] = random.uniform(kef_min, kef_max)
+        copy[rnd_kef_num] *= random.uniform(kef_min, kef_max)
         return copy
