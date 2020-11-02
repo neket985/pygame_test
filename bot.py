@@ -17,19 +17,19 @@ def random_kefs(count):
 
 
 class Bot(MovedEntity):
-    moves_dict = dict([
-        (0, env.BOT_KEY_LEFT[0]),
-        (1, env.BOT_KEY_RIGHT[0]),
-        (2, env.BOT_KEY_UP[0]),
-        (3, env.BOT_KEY_DOWN[0])
-    ])
     score = 0
     max_coord = (0, 0)
     min_coord = (env.WIDTH, env.HEIGHT)
+    die_oreol = 50
+    oreol_move_timer = 40
+    oreol_contains = 0
 
-    def __init__(self, flowers, girl, flowers_count, kefs=None):
+    def __init__(self, flowers, girl, flowers_count, gen, kefs=None):
+        self.gen = gen
         self.load_images(os.path.join(env.img_folder, 'characters.png'), (3 * 16, 0, 3 * 16, 4 * 16), (16, 16))
+        # if kefs is None:
         self.images = [self.inverted(i) for i in self.images]
+
         MovedEntity.__init__(self, env.BOT_KEY_LEFT, env.BOT_KEY_RIGHT, env.BOT_KEY_UP, env.BOT_KEY_DOWN)
 
         self.image = self.getSpriteByTik()
@@ -45,26 +45,33 @@ class Bot(MovedEntity):
         else:
             self.kefs = kefs
 
-    @staticmethod
-    def inverted(img):
+    def inverted(self, img):
         inv = pygame.Surface(img.get_rect().size, pygame.SRCALPHA)
-        inv.fill((255, 255, 255, 255))
-        inv.blit(img, (0, 0), None, pygame.BLEND_RGB_SUB)
+        # inv.fill((255, 255, 255, 255))
+        inv.blit(img, (0, 0))#, None, pygame.BLEND_RGB_SUB)
+        text = pygame.font.Font(pygame.font.get_default_font(), 20).render(str(self.gen), False, env.WHITE)
+        inv.blit(text, text.get_rect(center=inv.get_rect().center))
         return inv
 
     def auto_step(self):
         self.collect_meta()
-        step = (self.calc_next_step() % 100) // 10
-        if step < 4:
-            self.move_start(self.moves_dict[step])
-        elif step < 8:
-            self.move_end(self.moves_dict[step - 4])
+        self.move_state = self.calc_next_step()
 
     def collect_meta(self):
         new_pos = self.rect.center
-        dist = (self.last_pos[0] - new_pos[0]).__abs__() + (self.last_pos[1] - new_pos[1]).__abs__()
-        if dist <= 2:
-            self.score -= 10
+        x_pos_dist = (self.last_pos[0] - new_pos[0]).__abs__()
+        y_pos_dist = (self.last_pos[1] - new_pos[1]).__abs__()
+
+        self.oreol_contains += 1
+        if x_pos_dist > self.die_oreol or y_pos_dist > self.die_oreol:
+            self.last_pos = new_pos
+            self.oreol_contains = 0
+        elif self.oreol_move_timer - self.oreol_contains <= 0:
+            self.score -= 10*(self.oreol_contains-self.oreol_move_timer)
+
+        if self.rect.top == 0 or self.rect.right == env.WIDTH or self.rect.bottom == env.HEIGHT or self.rect.left == 0:
+            self.score -= 5
+
         if new_pos[0] > self.max_coord[0]:
             self.max_coord = (new_pos[0], self.max_coord[1])
         if new_pos[1] > self.max_coord[1]:
@@ -85,16 +92,16 @@ class Bot(MovedEntity):
 
         girl_dist = (self.girl.rect.center[0] - self.rect.center[0], self.girl.rect.center[1] - self.rect.center[1])
 
-        return (
-                flower_kef[0] +
-                flower_kef[1] +
+        return (flower_kef[0] +
                 # self.kefs[i] * girl_dist[0] +
+                self.kefs[i + 3] * self.rect.center[0] +
+                self.kefs[i + 5] * (env.WIDTH - self.rect.center[0])
+                ,
+                flower_kef[1] +
                 # self.kefs[i+1] * girl_dist[1] +
-                self.kefs[i + 2] * self.rect.top +
-                self.kefs[i + 3] * self.rect.left +
-                self.kefs[i + 4] * (env.HEIGHT - self.rect.bottom) +
-                self.kefs[i + 5] * (env.WIDTH - self.rect.right)
-        ).__abs__()
+                self.kefs[i + 2] * self.rect.center[1] +
+                self.kefs[i + 4] * (env.HEIGHT - self.rect.center[1])
+                )
 
     def get_score(self):
         move_rect = (self.max_coord[0] - self.min_coord[0]) + (self.max_coord[1] - self.min_coord[1])

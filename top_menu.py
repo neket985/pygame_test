@@ -1,5 +1,3 @@
-import datetime
-
 import pygame
 from pygame import Surface
 from pygame.sprite import Sprite
@@ -12,11 +10,12 @@ class TopMenu(Sprite):
     width = 500
     height = 60
 
-    def __init__(self, flowers_count: int):
+    def __init__(self, flowers_count: int, gen):
         self.start_at = pygame.time.get_ticks()
         self.finish_at = None
         self.finished = False
         self.flowers_count = flowers_count
+        self.gen = gen
         Sprite.__init__(self)
         self.render()
 
@@ -31,7 +30,8 @@ class TopMenu(Sprite):
 
         expire_after = self.getExpireTime()
         font = pygame.font.Font(pygame.font.get_default_font(), 30)
-        text = font.render(str(self.flowers_count) + '   ' + str(expire_after), False, env.WHITE)
+        text = font.render(str(self.flowers_count) + '   ' + str(expire_after) + '   ' + str(self.gen), False,
+                           env.WHITE)
         text_rect = text.get_rect()
         text_rect.midleft = self.rect.midleft
         text_rect.left += 10
@@ -39,10 +39,10 @@ class TopMenu(Sprite):
 
     def getExpireTime(self) -> int:
         if self.finished:
-            expire_after = self.timer - (self.finish_at - self.start_at)//1000
+            expire_after = self.timer - (self.finish_at - self.start_at) // 1000
         else:
             now = pygame.time.get_ticks()
-            expire_after = self.timer - (now - self.start_at)//1000
+            expire_after = self.timer - (now - self.start_at) // 1000
 
         if expire_after < 0:
             expire_after = 0

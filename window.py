@@ -15,8 +15,9 @@ from top_menu import TopMenu
 
 class Window:
     flowers_count = 10
-    bots_count = 200
-    childs_count = 20
+    bots_count = 100
+    parents_count = 20
+    childs_count = 4
 
     def __init__(self):
         # создаем игру и окно
@@ -26,6 +27,7 @@ class Window:
         pygame.display.set_caption("My Game")
         self.clock = pygame.time.Clock()
         self.finish = False
+        self.gen = 0
         self.restart()
 
     def onEvent(self, event):
@@ -99,20 +101,24 @@ class Window:
         if self.finish:
             self.refresh_bots()
         else:
-            self.bots = [Bot(pygame.sprite.Group(), self.girl, self.flowers_count) for i in range(self.bots_count)]
+            self.bots = [Bot(pygame.sprite.Group(), self.girl, self.flowers_count, self.gen) for i in range(self.bots_count)]
 
         self.flower_sprites: Dict[MovedEntity, Group] = \
             dict([(self.player, pygame.sprite.Group())] + [(b, b.flowers) for b in self.bots])
 
-        for plyr in self.flower_sprites:
-            for i in range(self.flowers_count):
-                self.flower_sprites[plyr].add(flower.Flower())
+        for i in range(self.flowers_count):
+            self.flower_sprites[self.player].add(flower.Flower())
 
-        self.top_menu = TopMenu(self.flower_sprites[self.player].__len__())
+        for bot in self.bots:
+            for i in self.flower_sprites[self.player]:
+                self.flower_sprites[bot].add(flower.Flower(i.rect.center))
+
+        self.top_menu = TopMenu(self.flower_sprites[self.player].__len__(), self.gen)
         self.all_sprites.add(*self.bots, self.player, self.top_menu)
         self.finish = False
 
-    def refresh_bots(self):  # todo брать 10% лучших и разводить от них потомство. подумать над реорганизацией кэфов
+    def refresh_bots(self):
+        self.gen += 1
         sorted_scores = self.bots.copy()
         sorted_scores.sort(key=lambda x: x.get_score(), reverse=True)
         best_bot = sorted_scores[0]
@@ -121,10 +127,12 @@ class Window:
         print('Очки ' + str(best_bot.score))
         print(best_bot.kefs)
 
-        ten_percent_count = sorted_scores.__len__() // self.childs_count
-        best_bots = sorted_scores[0:ten_percent_count]
+        best_bots = sorted_scores[0:self.parents_count]
 
-        new_bots_scores = []
+        new_bots = []
         for bot in best_bots:
-            new_bots_scores.__iadd__(bot.get_child_kefs(self.childs_count - 1).__add__([bot.kefs]))
-        self.bots = [Bot(pygame.sprite.Group(), self.girl, self.flowers_count, kefs) for kefs in new_bots_scores]
+            new_bots.__iadd__([Bot(pygame.sprite.Group(), self.girl, self.flowers_count, bot.gen, kefs) for kefs in
+                               bot.get_child_kefs(self.childs_count - 1).__add__([bot.kefs])])
+
+        self.bots = new_bots.__iadd__([Bot(pygame.sprite.Group(), self.girl, self.flowers_count, self.gen) for i in
+                                       range(self.bots_count - new_bots.__len__())])
