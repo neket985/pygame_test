@@ -16,6 +16,7 @@ from top_menu import TopMenu
 class Window:
     flowers_count = 10
     bots_count = 200
+    childs_count = 20
 
     def __init__(self):
         # создаем игру и окно
@@ -98,7 +99,7 @@ class Window:
         if self.finish:
             self.refresh_bots()
         else:
-            self.bots = [Bot(pygame.sprite.Group(), self.girl) for i in range(self.bots_count)]
+            self.bots = [Bot(pygame.sprite.Group(), self.girl, self.flowers_count) for i in range(self.bots_count)]
 
         self.flower_sprites: Dict[MovedEntity, Group] = \
             dict([(self.player, pygame.sprite.Group())] + [(b, b.flowers) for b in self.bots])
@@ -111,14 +112,19 @@ class Window:
         self.all_sprites.add(*self.bots, self.player, self.top_menu)
         self.finish = False
 
-    def refresh_bots(self):
-        bots_scores = [bot.get_score() for bot in self.bots]
-        best_bot = self.bots[bots_scores.index(max(bots_scores))]
+    def refresh_bots(self):  # todo брать 10% лучших и разводить от них потомство. подумать над реорганизацией кэфов
+        sorted_scores = self.bots.copy()
+        sorted_scores.sort(key=lambda x: x.get_score(), reverse=True)
+        best_bot = sorted_scores[0]
         print('Лучший!')
         print('Цветов осталось не собрано ' + str(best_bot.flowers.__len__()))
-        print('Стоял у стены ' + str(best_bot.stay_frames) + ' кадров')
+        print('Очки ' + str(best_bot.score))
         print(best_bot.kefs)
 
-        new_bots_scores = best_bot.get_child_kefs(self.bots_count - 1)
-        new_bots_scores.append(best_bot.kefs)
-        self.bots = [Bot(pygame.sprite.Group(), self.girl, kefs) for kefs in new_bots_scores]
+        ten_percent_count = sorted_scores.__len__() // self.childs_count
+        best_bots = sorted_scores[0:ten_percent_count]
+
+        new_bots_scores = []
+        for bot in best_bots:
+            new_bots_scores.__iadd__(bot.get_child_kefs(self.childs_count - 1).__add__([bot.kefs]))
+        self.bots = [Bot(pygame.sprite.Group(), self.girl, self.flowers_count, kefs) for kefs in new_bots_scores]
