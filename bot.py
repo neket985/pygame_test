@@ -4,7 +4,6 @@ from typing import List
 
 import pygame
 
-import common
 import env
 from moved_entity import MovedEntity
 
@@ -23,6 +22,7 @@ class Bot(MovedEntity):
     die_oreol = 50
     oreol_move_timer = 40
     oreol_contains = 0
+    max_distance = (env.WIDTH**2+env.HEIGHT**2)**0.5
 
     def __init__(self, flowers, girl, flowers_count, gen, kefs=None):
         self.gen = gen
@@ -41,14 +41,13 @@ class Bot(MovedEntity):
         self.girl = girl
 
         if kefs is None:
-            self.kefs = random_kefs(flowers_count * 2 + 6)
+            self.kefs = random_kefs(flowers_count + 1)
         else:
             self.kefs = kefs
 
     def inverted(self, img):
         inv = pygame.Surface(img.get_rect().size, pygame.SRCALPHA)
-        # inv.fill((255, 255, 255, 255))
-        inv.blit(img, (0, 0))#, None, pygame.BLEND_RGB_SUB)
+        inv.blit(img, (0, 0))
         text = pygame.font.Font(pygame.font.get_default_font(), 20).render(str(self.gen), False, env.WHITE)
         inv.blit(text, text.get_rect(center=inv.get_rect().center))
         return inv
@@ -67,10 +66,7 @@ class Bot(MovedEntity):
             self.last_pos = new_pos
             self.oreol_contains = 0
         elif self.oreol_move_timer - self.oreol_contains <= 0:
-            self.score -= (self.oreol_contains-self.oreol_move_timer)//10
-
-        if self.rect.top == 0 or self.rect.right == env.WIDTH or self.rect.bottom == env.HEIGHT or self.rect.left == 0:
-            self.score -= 5
+            self.score -= (self.oreol_contains - self.oreol_move_timer) // 10
 
         if new_pos[0] > self.max_coord[0]:
             self.max_coord = (new_pos[0], self.max_coord[1])
@@ -82,30 +78,24 @@ class Bot(MovedEntity):
             self.min_coord = (self.min_coord[0], new_pos[1])
 
     def calc_next_step(self):
-        flower_kef = (0, 0)
+        object_for_move = []
         i = 0
         for flower in self.flowers:
-            flower_dist = (self.kefs[i] * (flower.rect.center[0] - self.rect.center[0]),
-                           self.kefs[i + 1] * (flower.rect.center[1] - self.rect.center[1]))
-            i += 2
-            flower_kef = common.tuples_plus(flower_kef, flower_dist)
+            flower_dist = (flower.rect.center[0] - self.rect.center[0],
+                           flower.rect.center[1] - self.rect.center[1])
+            distance = ((flower_dist[0]**2 + flower_dist[1]**2)**0.5)/self.max_distance
+            object_for_move.append((self.kefs[i]/distance, flower_dist))
+            i += 1
 
         girl_dist = (self.girl.rect.center[0] - self.rect.center[0], self.girl.rect.center[1] - self.rect.center[1])
+        object_for_move.append((self.kefs[i], girl_dist))
 
-        return (flower_kef[0] +
-                # self.kefs[i] * girl_dist[0] +
-                self.kefs[i + 3] * self.rect.center[0] +
-                self.kefs[i + 5] * (env.WIDTH - self.rect.center[0])
-                ,
-                flower_kef[1] +
-                # self.kefs[i+1] * girl_dist[1] +
-                self.kefs[i + 2] * self.rect.center[1] +
-                self.kefs[i + 4] * (env.HEIGHT - self.rect.center[1])
-                )
+        object_for_move.sort(key=lambda x: x[0], reverse=True)
+        best_move = object_for_move[0]
+        return best_move[1]
 
     def get_score(self):
-        move_rect = (self.max_coord[0] - self.min_coord[0]) + (self.max_coord[1] - self.min_coord[1])
-        return 1000 * (-self.flowers.__len__()) + self.score + move_rect
+        return 1000 * (-self.flowers.__len__()) + self.score
 
     def get_child_kefs(self, count) -> List:
         return [self.get_child_kef() for i in range(count)]

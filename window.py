@@ -16,8 +16,10 @@ from top_menu import TopMenu
 class Window:
     flowers_count = 10
     bots_count = 100
-    parents_count = 20
-    childs_count = 4
+    parents_count = 5
+    childs_count = 18
+    bot_kefs = None
+        # [0.2992764625884063, -0.45111985831907364, 0.034324156383470195, 0.7420118143078578, 0.20305567116814527, 0.24585005882518152, 0.4715142168897148, -0.15017876205188951, -0.14998973648173874, 0.4929961834415246, -0.006712253240808777]
 
     def __init__(self):
         # создаем игру и окно
@@ -66,24 +68,32 @@ class Window:
             self.check_win(b)
 
         if self.top_menu.getExpireTime() == 0:
-            print("Поражение")
+            # print("Поражение")
             self.finish = True
 
     def check_win(self, plyr):
         if pygame.sprite.spritecollide(plyr, self.girl_sprites, False):
             if self.flower_sprites[plyr].__len__() == 0:
-                self.top_menu.finish()
-                print("Победа")
-                self.finish = True
-            girl_collided = common.collide_rec(self.player.rect, self.girl.rect, self.player.speed + 1)
+                if self.finish:
+                    distance = ((plyr.rect.center[0]-self.girl.rect.center[0])**2 + (plyr.rect.center[0]-self.girl.rect.center[0])**2)**0.5
+                    plyr.score += 100*distance
+                else:
+                    self.top_menu.finish()
+                    print('Winner')
+                    print('Gen ' + str(plyr.gen) + '(' + str(self.gen) + ')')
+                    print('Time ' + str(self.top_menu.getExpireTime()))
+                    print(plyr.kefs)
+                    plyr.score += 1_000_000
+                    self.finish = True
+            girl_collided = common.collide_rec(plyr.rect, self.girl.rect, plyr.speed + 1)
             if girl_collided[0]:
-                self.player.rect.top = self.girl.rect.bottom
+                plyr.rect.top = self.girl.rect.bottom
             elif girl_collided[1]:
-                self.player.rect.right = self.girl.rect.left
+                plyr.rect.right = self.girl.rect.left
             elif girl_collided[2]:
-                self.player.rect.bottom = self.girl.rect.top
+                plyr.rect.bottom = self.girl.rect.top
             elif girl_collided[3]:
-                self.player.rect.left = self.girl.rect.right
+                plyr.rect.left = self.girl.rect.right
 
     def draw(self):
         self.screen.fill(env.GREEN)
@@ -101,7 +111,8 @@ class Window:
         if self.finish:
             self.refresh_bots()
         else:
-            self.bots = [Bot(pygame.sprite.Group(), self.girl, self.flowers_count, self.gen) for i in range(self.bots_count)]
+            self.bots = [Bot(pygame.sprite.Group(), self.girl, self.flowers_count, self.gen, self.bot_kefs) for i in
+                         range(self.bots_count)]
 
         self.flower_sprites: Dict[MovedEntity, Group] = \
             dict([(self.player, pygame.sprite.Group())] + [(b, b.flowers) for b in self.bots])
@@ -120,14 +131,7 @@ class Window:
     def refresh_bots(self):
         self.gen += 1
         sorted_scores = self.bots.copy()
-        sorted_scores.sort(key=lambda x: x.flowers.__len__())
-        best_bot = sorted_scores[0]
         sorted_scores.sort(key=lambda x: x.get_score(), reverse=True)
-        print('Лучший!')
-        print('Цветов осталось не собрано ' + str(best_bot.flowers.__len__()))
-        print('Очки ' + str(best_bot.score))
-        print('Gen ' + str(best_bot.gen) + '(' + str(self.gen-1) + ')')
-        print(best_bot.kefs)
 
         best_bots = sorted_scores[0:self.parents_count]
 
