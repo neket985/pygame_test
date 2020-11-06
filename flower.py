@@ -8,15 +8,19 @@ from spritesheet import SpriteSheet
 
 
 class Flower(pygame.sprite.Sprite):
-    game_folder = os.path.dirname(__file__)
-    img_folder = os.path.join(game_folder, 'assets', 'img')
+    width = 50
+    height = 50
 
     def __init__(self, center=None):
         pygame.sprite.Sprite.__init__(self)
-        img = SpriteSheet(os.path.join(self.img_folder, 'basictiles.png'))
-        self.image = pygame.transform.scale(img.image_at((4 * 16, 2 * 16, 16, 16)).convert_alpha(), (25, 25))
+        img = SpriteSheet(os.path.join(env.img_folder, 'flower.png'))
+        self.image = pygame.transform.scale(img.image_at((5 * 32, 0, 32, 32)),
+                                            (self.width, self.height)).convert_alpha()
         self.rect = self.image.get_rect()
 
         if center is None:
-            center = (random.randint(0, env.WIDTH), random.randint(0, env.HEIGHT))
+            center = (
+                random.randint(self.width // 2, env.WIDTH - self.width // 2),
+                random.randint(self.height // 2, env.HEIGHT - self.height // 2)
+            )
         self.rect.center = center

@@ -9,17 +9,20 @@ import flower
 import girl
 import player
 from bot import Bot
+from map import Map
 from moved_entity import MovedEntity
 from top_menu import TopMenu
 
 
 class Window:
     flowers_count = 10
-    bots_count = 100
-    parents_count = 5
-    childs_count = 18
+    bots_count = 50
+    parents_count = 8
+    childs_count = 5
     bot_kefs = None
-        # [0.2992764625884063, -0.45111985831907364, 0.034324156383470195, 0.7420118143078578, 0.20305567116814527, 0.24585005882518152, 0.4715142168897148, -0.15017876205188951, -0.14998973648173874, 0.4929961834415246, -0.006712253240808777]
+    # bot_kefs = [0.2992764625884063, -0.45111985831907364, 0.034324156383470195, 0.7420118143078578, 0.20305567116814527,
+    #             0.24585005882518152, 0.4715142168897148, -0.15017876205188951, -0.14998973648173874, 0.4929961834415246,
+    #             -0.006712253240808777]
 
     def __init__(self):
         # создаем игру и окно
@@ -75,8 +78,9 @@ class Window:
         if pygame.sprite.spritecollide(plyr, self.girl_sprites, False):
             if self.flower_sprites[plyr].__len__() == 0:
                 if self.finish:
-                    distance = ((plyr.rect.center[0]-self.girl.rect.center[0])**2 + (plyr.rect.center[0]-self.girl.rect.center[0])**2)**0.5
-                    plyr.score += 100*distance
+                    distance = ((plyr.rect.center[0] - self.girl.rect.center[0]) ** 2 + (
+                            plyr.rect.center[0] - self.girl.rect.center[0]) ** 2) ** 0.5
+                    plyr.score += 100 * distance
                 else:
                     self.top_menu.finish()
                     print('Winner')
@@ -97,9 +101,9 @@ class Window:
 
     def draw(self):
         self.screen.fill(env.GREEN)
+        self.all_sprites.draw(self.screen)
         self.girl_sprites.draw(self.screen)
         [self.flower_sprites[i].draw(self.screen) for i in self.flower_sprites]
-        self.all_sprites.draw(self.screen)
 
     def restart(self):
         self.all_sprites = pygame.sprite.Group()
@@ -125,7 +129,13 @@ class Window:
                 self.flower_sprites[bot].add(flower.Flower(i.rect.center))
 
         self.top_menu = TopMenu(self.flower_sprites[self.player].__len__(), self.gen)
-        self.all_sprites.add(*self.bots, self.player, self.top_menu)
+        self.all_sprites.add(Map(), *self.bots, self.player, self.top_menu)
+
+        # удаление управляемого игрока с поля
+        self.all_sprites.remove(self.player)
+        self.flower_sprites.pop(self.player)
+        # ------------------------------------
+
         self.finish = False
 
     def refresh_bots(self):
